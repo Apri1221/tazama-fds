@@ -1,0 +1,1 @@
+https://github.com/tazama-lf/docs/blob/dev/Technical/Database/postgres-tazama-schema.md

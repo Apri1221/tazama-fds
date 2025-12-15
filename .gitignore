@@ -1,0 +1,91 @@
+## Simplified .gitignore
+# Node / JS
+**/node_modules/
+npm-debug.log*
+yarn-error.log*
+.yarn-integrity
+dist/
+build/
+.cache/
+.next/
+
+# Python
+**/.venv/
+**/venv/
+**/__pycache__/
+*.py[cod]
+
+# Logs and env
+logs/
+*.log
+.env
+.env.rule*
+
+# Coverage and test output
+coverage/
+.nyc_output/
+
+# Editor / OS
+.DS_Store
+.vscode/
+.idea/
+
+# Docker and compose overrides
+docker-compose.override.yml
+.docker/
+
+# This file is ignored by git
+.env
+# services/
+# init-db/
+node_modules/
+*.log
+.DS_Store
+postgres-data/
+
+
+# Python / Virtualenvs (ignore envs anywhere)
+# common names and variants, match in any subdirectory
+**/.venv/
+**/venv/
+**/env/
+**/ENV/
+**/.venv-*/
+venv*/
+
+# Byte-compiled / optimized / DLL files (any folder)
+**/__pycache__/
+**/*.py[cod]
+**/*$py.class
+
+# Common Python caches and tooling
+.mypy_cache/
+.pytest_cache/
+.cache/
+.venv
+.python-version
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+.coverage
+coverage.xml
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints
+
+# VS Code
+.vscode/
+
+# macOS
+.DS_Store
+
+# local development
+instance/

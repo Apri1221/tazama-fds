@@ -1,0 +1,10 @@
+{
+  "name": "@tazama-lf/rule-903",
+  "version": "1.0.0",
+  "description": "Rule 903: Geographic Risk Detection",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "keywords": ["tazama", "fraud-detection", "geo-location", "risk-scoring"],
+  "author": "Custom Implementation",
+  "license": "Apache-2.0"
+}

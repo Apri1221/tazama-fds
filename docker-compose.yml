@@ -1,0 +1,295 @@
+services:
+  # Infrastructure Services
+  nats:
+    image: nats:latest
+    container_name: tazama-nats
+    ports:
+      - "4222:4222"
+      - "8222:8222"
+      - "6222:6222"
+    command: "-js -m 8222"
+    networks:
+      - tazama-network
+
+  postgres:
+    image: postgres:15
+    container_name: tazama-postgres
+    environment:
+      POSTGRES_DB: tazama
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./init-db:/docker-entrypoint-initdb.d
+    networks:
+      - tazama-network
+
+  valkey:
+    image: valkey/valkey:latest
+    container_name: tazama-valkey
+    ports:
+      - "6380:6379"
+    networks:
+      - tazama-network
+
+  # Core Services
+  admin-service:
+    build:
+      context: ./services/admin-service
+      dockerfile: Dockerfile
+      args:
+        GH_TOKEN: ${GH_TOKEN}
+    container_name: tazama-admin-service
+    env_file:
+      - ./services/admin-service/.env
+    environment:
+      - CORS_POLICY=demo
+    ports:
+      - "3100:3100"
+    depends_on:
+      - postgres
+      - nats
+    networks:
+      - tazama-network
+    volumes:
+      - ./services/admin-service:/app
+      - /app/node_modules
+
+  tms-service:
+    build:
+      context: ./services/tms-service
+      dockerfile: Dockerfile
+      args:
+        GH_TOKEN: ${GH_TOKEN}
+    container_name: tazama-tms
+    env_file:
+      - ./services/tms-service/.env
+    environment:
+      - CORS_POLICY=demo
+    ports:
+      - "3000:3000"
+    depends_on:
+      - postgres
+      - nats
+    networks:
+      - tazama-network
+    volumes:
+      - ./services/tms-service:/app
+      - /app/node_modules
+
+  event-director:
+    build:
+      context: ./services/event-director
+      dockerfile: Dockerfile
+      args:
+        GH_TOKEN: ${GH_TOKEN}
+    container_name: tazama-event-director
+    env_file:
+      - ./services/event-director/.env
+    depends_on:
+      - postgres
+      - nats
+    networks:
+      - tazama-network
+    volumes:
+      - ./services/event-director:/app
+      - /app/node_modules
+
+  rule-901:
+    build:
+      context: ./services/rule-executer
+      dockerfile: Dockerfile
+      args:
+        GH_TOKEN: ${GH_TOKEN}
+    container_name: tazama-rule-901
+    env_file:
+      - ./services/rule-executer/.env
+    depends_on:
+      - postgres
+      - nats
+      - event-director
+    networks:
+      - tazama-network
+    volumes:
+      - ./services/rule-executer:/app
+      - /app/node_modules
+
+  rule-006:
+    build:
+      context: ./services/rule-executer
+      dockerfile: Dockerfile
+      args:
+        GH_TOKEN: ${GH_TOKEN}
+    container_name: tazama-rule-006
+    env_file:
+      - ./services/rule-executer/.env.rule-006
+    depends_on:
+      - postgres
+      - nats
+      - event-director
+    networks:
+      - tazama-network
+    volumes:
+      - ./services/rule-executer:/app
+      - /app/node_modules
+
+  rule-018:
+    build:
+      context: ./services/rule-executer
+      dockerfile: Dockerfile
+      args:
+        GH_TOKEN: ${GH_TOKEN}
+    container_name: tazama-rule-018
+    env_file:
+      - ./services/rule-executer/.env.rule-018
+    depends_on:
+      - postgres
+      - nats
+      - event-director
+    networks:
+      - tazama-network
+    volumes:
+      - ./services/rule-executer:/app
+      - /app/node_modules
+
+  rule-903:
+    build:
+      context: ./services/rule-executer
+      dockerfile: Dockerfile
+      args:
+        GH_TOKEN: ${GH_TOKEN}
+        RULE_NAME: "903"
+        RULE_VERSION: "1.0.0"
+    container_name: tazama-rule-903
+    env_file:
+      - ./services/rule-executer/.env.rule-903
+    depends_on:
+      - postgres
+      - nats
+      - event-director
+    networks:
+      - tazama-network
+    volumes:
+      - ./services/rule-executer:/app
+      - /app/node_modules
+      - ./services/rule-executer/rule-903:/app/rule-903:ro
+
+  rule-902:
+    build:
+      context: ./services/rule-executer
+      dockerfile: Dockerfile
+      args:
+        GH_TOKEN: ${GH_TOKEN}
+    container_name: tazama-rule-902
+    env_file:
+      - ./services/rule-executer/.env.rule-902
+    depends_on:
+      - postgres
+      - nats
+      - event-director
+    networks:
+      - tazama-network
+    volumes:
+      - ./services/rule-executer:/app
+      - /app/node_modules
+
+  event-flow:
+    build:
+      context: ./services/event-flow
+      dockerfile: Dockerfile
+      args:
+        GH_TOKEN: ${GH_TOKEN}
+    container_name: tazama-event-flow
+    env_file:
+      - ./services/event-flow/.env
+    depends_on:
+      - postgres
+      - nats
+      - event-director
+    networks:
+      - tazama-network
+    volumes:
+      - ./services/event-flow:/app
+      - /app/node_modules
+
+  typology-processor:
+    build:
+      context: ./services/typology-processor
+      dockerfile: Dockerfile
+      args:
+        GH_TOKEN: ${GH_TOKEN}
+    container_name: tazama-typology-processor
+    env_file:
+      - ./services/typology-processor/.env
+    depends_on:
+      - postgres
+      - nats
+    networks:
+      - tazama-network
+    volumes:
+      - ./services/typology-processor:/app
+      - /app/node_modules
+
+  tadp:
+    build:
+      context: ./services/transaction-aggregation-decisioning-processor
+      dockerfile: Dockerfile
+      args:
+        GH_TOKEN: ${GH_TOKEN}
+    container_name: tazama-tadp
+    env_file:
+      - ./services/transaction-aggregation-decisioning-processor/.env
+    depends_on:
+      - postgres
+      - nats
+    networks:
+      - tazama-network
+
+  relay-service:
+    # Build from source - plugin extracted from official image
+    build:
+      context: ./services/relay-service
+      dockerfile: Dockerfile
+      args:
+        GH_TOKEN: ${GH_TOKEN}
+    # Or use official pre-built image:
+    # image: tazamaorg/relay-service-integration-nats:3.0.0
+    container_name: tazama-relay-service
+    env_file:
+      - ./services/relay-service/.env
+    depends_on:
+      - nats
+    networks:
+      - tazama-network
+
+  tazama-api-client:
+    image: tazama-api-client:local
+    build:
+      context: ./tazama-api-client
+      dockerfile: Dockerfile
+    container_name: tazama-api-client
+    ports:
+      - "8091:8091"
+    environment:
+      - SERVER_HOST=0.0.0.0
+      - SERVER_PORT=8091
+      - TMS_BASE_URL=http://tazama-tms:3000
+    depends_on:
+      - tazama-tms
+    networks:
+      - tazama-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8091/ || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+networks:
+  tazama-network:
+    driver: bridge
+
+volumes:
+  postgres-data:

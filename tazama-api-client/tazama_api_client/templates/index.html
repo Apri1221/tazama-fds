@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fraud Detection Dashboard - Tazama</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/static/css/style.css?v=6">
+    <link rel="stylesheet" href="/static/css/status.css?v=2">
+    <link rel="stylesheet" href="/static/css/animations.css?v=1">
+    <style>
+        .icon {
+            width: 1.25rem;
+            height: 1.25rem;
+            display: inline-block;
+            vertical-align: middle;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>🛡️ Fraud Detection Dashboard</h1>
+            <p class="subtitle" style="font-weight: 500; letter-spacing: 0.5px;">Monitor and test your fraud prevention
+                system</p>
+        </header>
+
+        <div class="status-bar">
+            <div class="status-indicator">
+                <div class="status-dot offline" id="statusDot"></div>
+                <span id="statusText">Checking System Status...</span>
+            </div>
+            <button class="btn btn-primary" style="width: auto; display: flex; align-items: center; gap: 0.5rem;" onclick="checkHealth()">
+                <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                Check Connectivity
+            </button>
+        </div>
+
+        <!-- Stats Dashboard -->
+        <div class="card" style="margin-bottom: 1.5rem; background: #1e293b; border: none;">
+            <h2 style="color: #fff; border-bottom-color: rgba(255,255,255,0.1);">
+                <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+                Transaction Statistics
+            </h2>
+            <p style="color: #cbd5e1; font-size: 0.875rem; margin-bottom: 1rem;">Real-time data from Tazama database</p>
+            <div id="statsContainer"
+                style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 1rem;">
+                <div class="stat-box" style="background: rgba(255,255,255,0.1);">
+                    <div class="stat-value" id="statTotal" style="color: #fff; font-weight: 700;">0</div>
+                    <div class="stat-label" style="color: #cbd5e1;">Total Transactions</div>
+                </div>
+                <div class="stat-box" style="background: rgba(16,185,129,0.15);">
+                    <div class="stat-value" id="statSuccess" style="color: #34d399; font-weight: 700;">0</div>
+                    <div class="stat-label" style="color: #cbd5e1;">Processed</div>
+                </div>
+                <div class="stat-box" style="background: rgba(99,102,241,0.15);">
+                    <div class="stat-value" id="statPacs008" style="color: #818cf8; font-weight: 700;">0</div>
+                    <div class="stat-label" style="color: #cbd5e1;">pacs.008</div>
+                </div>
+                <div class="stat-box" style="background: rgba(168,85,247,0.15);">
+                    <div class="stat-value" id="statPacs002" style="color: #c084fc; font-weight: 700;">0</div>
+                    <div class="stat-label" style="color: #cbd5e1;">pacs.002</div>
+                </div>
+                <div class="stat-box" style="background: rgba(255,255,255,0.1);">
+                    <div class="stat-value" id="statAvgTime" style="color: #fff; font-weight: 700;">0 IDR</div>
+                    <div class="stat-label" style="color: #cbd5e1;">Avg Amount</div>
+                </div>
+            </div>
+            <div style="margin-top: 1rem; display: flex; gap: 10px;">
+                <button class="btn btn-secondary" style="width: auto; display: flex; align-items: center; gap: 0.5rem;" onclick="loadStats()">
+                    <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                    Refresh Stats
+                </button>
+                <a href="/docs" target="_blank" class="btn btn-secondary" style="width: auto; text-decoration: none; display: flex; align-items: center; gap: 0.5rem;">
+                    <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                    </svg>
+                    API Docs
+                </a>
+            </div>
+        </div>
+
+        <!-- Batch Testing -->
+        <div class="card" style="margin-bottom: 1.5rem; background: #d8b4fe; border: none;">
+            <h2 style="color: #581c87; border-bottom-color: rgba(0,0,0,0.1);">
+                <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+                Batch Testing
+            </h2>
+            <p style="color: #6b21a8; font-size: 0.875rem; margin-bottom: 1rem;">Run multiple test scenarios in sequence</p>
+            <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 1rem;">
+                <label style="color: #581c87; display: flex; align-items: center; gap: 5px;">
+                    <input type="checkbox" id="batch_quick_accc" checked> Quick ACCC
+                </label>
+                <label style="color: #581c87; display: flex; align-items: center; gap: 5px;">
+                    <input type="checkbox" id="batch_quick_acsc" checked> Quick ACSC
+                </label>
+                <label style="color: #581c87; display: flex; align-items: center; gap: 5px;">
+                    <input type="checkbox" id="batch_quick_rjct" checked> Quick RJCT
+                </label>
+                <label style="color: #581c87; display: flex; align-items: center; gap: 5px;">
+                    <input type="checkbox" id="batch_rule_901"> Rule 901 (Velocity)
+                </label>
+                <label style="color: #581c87; display: flex; align-items: center; gap: 5px;">
+                    <input type="checkbox" id="batch_rule_902"> Rule 902 (Money Mule)
+                </label>
+                <label style="color: #581c87; display: flex; align-items: center; gap: 5px;">
+                    <input type="checkbox" id="batch_rule_006"> Rule 006 (Structuring)
+                </label>
+                <label style="color: #581c87; display: flex; align-items: center; gap: 5px;">
+                    <input type="checkbox" id="batch_rule_018"> Rule 018 (High Value)
+                </label>
+            </div>
+            <button class="btn btn-primary" style="display: flex; align-items: center; gap: 0.5rem; justify-content: center;" onclick="runBatchTest()">
+                <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Run Batch Test
+            </button>
+            <div id="batchResults" class="response-box"
+                style="display:none; margin-top: 1rem; background: rgba(255,255,255,0.1);">
+                <pre style="color: #fff;"></pre>
+            </div>
+        </div>
+
+        <div class="grid">
+            <!-- Test pacs.008 -->
+            <div class="card">
+                <h2>
+                    <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                    </svg>
+                    Send Transfer (pacs.008)
+                </h2>
+                <p class="card-desc">Initiate a credit transfer request. This simulates a customer sending money.</p>
+
+                <div class="form-group">
+                    <label>Debtor Name (Nama Pengirim) <span style="color: red;">*</span></label>
+                    <input type="text" id="debtorName008" placeholder="e.g. John Doe" value="" required>
+                </div>
+                <div class="form-group">
+                    <label>Debtor Account (Rekening Pengirim) <span style="color: red;">*</span></label>
+                    <input type="text" id="debtorAccount008" placeholder="e.g. GB_TEST_ACC_001" value="" required>
+                </div>
+                <div class="form-group">
+                    <label>Creditor Name (Nama Penerima)</label>
+                    <input type="text" id="creditorName008" placeholder="e.g. Jane Smith (leave empty for random)" value="">
+                </div>
+                <div class="form-group">
+                    <label>Creditor Account (Rekening Penerima)</label>
+                    <input type="text" id="creditorAccount008" placeholder="e.g. CRED_001 (leave empty for random)" value="">
+                </div>
+                <div class="form-group">
+                    <label>Amount (IDR) <span style="color: red;">*</span></label>
+                    <input type="number" id="amount008" placeholder="e.g. 5000" step="0.01" value="" required min="1">
+                </div>
+                <div class="form-group">
+                    <label>Currency</label>
+                    <input type="text" id="currency008" placeholder="IDR" value="IDR">
+                </div>
+                <button class="btn btn-success" onclick="testPacs008()">Send Request</button>
+                <div id="response008" class="response-box" style="display:none;">
+                    <pre></pre>
+                </div>
+            </div>
+
+
+            <!-- Rule 903: Geographic Risk Testing -->
+            <div class="card">
+                <h2>
+                    <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    Rule 903: Geographic Risk (pacs.008)
+                </h2>
+                <p class="card-desc">Test geo-location based fraud detection by entering transaction location details.</p>
+
+                <div class="form-group">
+                    <label>Debtor Name</label>
+                    <input type="text" id="geoDebtorName" placeholder="e.g. John Doe" value="">
+                </div>
+                <div class="form-group">
+                    <label>Debtor Account</label>
+                    <input type="text" id="geoDebtorAccount" placeholder="e.g. ID_ACC_001" value="">
+                </div>
+                <div class="form-group">
+                    <label>Creditor Name</label>
+                    <input type="text" id="geoCreditorName" placeholder="e.g. Jane Smith" value="">
+                </div>
+                <div class="form-group">
+                    <label>Creditor Account</label>
+                    <input type="text" id="geoCreditorAccount" placeholder="e.g. ID_ACC_002" value="">
+                </div>
+                <div class="form-group">
+                    <label>Amount (IDR)</label>
+                    <input type="number" id="geoAmount" placeholder="e.g. 1000000" value="1000000">
+                </div>
+
+                <div style="background: #f0f9ff; padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
+                    <div class="form-group">
+                        <label>City <span style="color: red;">*</span></label>
+                        <input type="text" id="geoCity" placeholder="e.g. Jakarta, Bandung, Yogyakarta" value="">
+                        <small style="color: #64748b;">🔴 High Risk: Jakarta, Tangerang, Surabaya</small><br>
+                        <small style="color: #64748b;">🟡 Medium Risk: Bandung, Semarang, Denpasar</small><br>
+                        <small style="color: #64748b;">🟢 Low Risk: Other cities</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Region/Province</label>
+                        <input type="text" id="geoRegion" placeholder="e.g. DKI Jakarta, Jawa Barat" value="">
+                    </div>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div class="form-group">
+                            <label>Latitude</label>
+                            <input type="text" id="geoLat" placeholder="e.g. -6.2088" value="">
+                        </div>
+                        <div class="form-group">
+                            <label>Longitude</label>
+                            <input type="text" id="geoLong" placeholder="e.g. 106.8456" value="">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 0.5rem;"> -->
+                <div style="margin-bottom: 0.5rem;">
+                    <button class="btn btn-primary" style="display: flex; align-items: center; gap: 0.5rem; justify-content: center;" onclick="sendGeoTransaction()">
+                        <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                        </svg>
+                        Send Single TX
+                    </button>
+
+                    <!-- sementara di hide, karena logicnya dan designnya belum rapih -->
+                    <!-- <button class="btn" style="background: #dc2626; color: #fff; display: flex; align-items: center; gap: 0.5rem; justify-content: center;" onclick="runGeoRiskE2E()">
+                        <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        E2E Flow Test
+                    </button> -->
+                </div>
+
+                <button class="btn btn-secondary" style="display: flex; align-items: center; gap: 0.5rem; justify-content: center; width: 100%;" onclick="checkRule903Results()">
+                    <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                    </svg>
+                    Check Rule 903 Results
+                </button>
+
+                <!-- E2E Progress Section -->
+                <div id="geoE2EProgress" style="display:none; margin-top: 1rem;">
+                    <div style="background: #fee2e2; padding: 1rem; border-radius: 10px; border-left: 4px solid #dc2626;">
+                        <div style="color: #991b1b; font-weight: 600; font-size: 0.9rem; margin-bottom: 0.75rem;">📊 E2E Test Progress</div>
+                        <div id="geoE2ESteps" style="display: flex; flex-direction: column; gap: 8px;">
+                            <div class="geo-step" data-step="1" style="display: flex; align-items: center; gap: 10px; padding: 0.4rem 0;">
+                                <span class="geo-icon" style="font-size: 1.1em; min-width: 24px;">⏳</span>
+                                <span style="color: #059669; font-size: 0.85rem;">Step 1: Normal TX (Yogyakarta - Low Risk)</span>
+                            </div>
+                            <div class="geo-step" data-step="2" style="display: flex; align-items: center; gap: 10px; padding: 0.4rem 0;">
+                                <span class="geo-icon" style="font-size: 1.1em; min-width: 24px;">⏳</span>
+                                <span style="color: #d97706; font-size: 0.85rem;">Step 2: Trigger Geographic Risk (High Risk Zone)</span>
+                            </div>
+                            <div class="geo-step" data-step="3" style="display: flex; align-items: center; gap: 10px; padding: 0.4rem 0;">
+                                <span class="geo-icon" style="font-size: 1.1em; min-width: 24px;">⏳</span>
+                                <span style="color: #2563eb; font-size: 0.85rem;">Step 3: Check Fraud Detection</span>
+                            </div>
+                            <div class="geo-step" data-step="4" style="display: flex; align-items: center; gap: 10px; padding: 0.4rem 0;">
+                                <span class="geo-icon" style="font-size: 1.1em; min-width: 24px;">⏳</span>
+                                <span style="color: #dc2626; font-size: 0.85rem;">Step 4: Block Transaction (RJCT)</span>
+                            </div>
+                            <div class="geo-step" data-step="5" style="display: flex; align-items: center; gap: 10px; padding: 0.4rem 0;">
+                                <span class="geo-icon" style="font-size: 1.1em; min-width: 24px;">⏳</span>
+                                <span style="color: #7c3aed; font-size: 0.85rem;">Step 5: Summary</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Fraud Summary Section -->
+                <div id="geoE2ESummary" style="display:none; margin-top: 1rem;">
+                    <div style="background: #fef3c7; padding: 1rem; border-radius: 10px; border-left: 4px solid #f59e0b;">
+                        <div style="color: #92400e; font-weight: 600; font-size: 0.9rem; margin-bottom: 0.5rem;">🚨 Geographic Risk Detected</div>
+                        <div id="geoSummaryContent" style="color: #78350f; font-size: 0.85rem; line-height: 1.6;"></div>
+                    </div>
+                </div>
+
+                <div id="geoTestResults" class="response-box" style="display:none; margin-top: 1rem;">
+                    <pre></pre>
+                </div>
+            </div>
+
+            <!-- Fraud Simulation Flow -->
+            <div class="card" style="background: #dc2626; border: none;">
+                <h2 style="color: #fff; border: none; margin-bottom: 0.75rem; font-size: 1.125rem; font-weight: 600;">
+                    <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                    Fraud Simulation (Full E2E Testing)
+                </h2>
+                <p style="color: rgba(255,255,255,0.9); font-size: 0.875rem; margin-bottom: 0.5rem;">
+                    Test all 4 fraud detection rules with realistic attack patterns
+                </p>
+                <div style="background: rgba(0,0,0,0.3); padding: 0.75rem; border-radius: 8px; margin-bottom: 1rem;">
+                    <div style="color: #fecaca; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.4rem;">✨ Full E2E Flow:</div>
+                    <ul style="color: #fecaca; font-size: 0.8rem; margin: 0; padding-left: 1.25rem; line-height: 1.6;">
+                        <li><strong>Step 1:</strong> Send normal transaction (ACCC)</li>
+                        <li><strong>Step 2:</strong> Trigger fraud pattern (multiple transactions)</li>
+                        <li><strong>Step 3:</strong> Check fraud detection in logs</li>
+                        <li><strong>Step 4:</strong> Block transaction (RJCT)</li>
+                        <li><strong>Step 5:</strong> Show detailed summary</li>
+                    </ul>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 0.85rem;">
+                    <label style="color: #fecaca; font-weight: 500; font-size: 0.85rem;">Select Fraud Rule to Test</label>
+                    <select id="simRule" onchange="updateFraudSimFields()"
+                        style="background: rgba(255,255,255,0.15); border: none; color: #fff; padding: 0.65rem 0.85rem; border-radius: 6px; width: 100%;">
+                        <option value="rule_901" style="background: #991b1b;">🚀 Rule 901 - Debtor Velocity (Same Account, Multiple Tx)</option>
+                        <option value="rule_902" style="background: #991b1b;">💰 Rule 902 - Money Mule Detection (Same Creditor)</option>
+                        <option value="rule_006" style="background: #991b1b;">💵 Rule 006 - Structuring/Smurfing (Similar Amounts)</option>
+                        <option value="rule_018" style="background: #991b1b;">💎 Rule 018 - High Value Transfer (Exceeds Average)</option>
+                        <option value="rule_903" style="background: #991b1b;">📍 Rule 903 - Geographic Risk (HIGH RISK Zones)</option>
+                    </select>
+                </div>
+
+                <div id="fraudSimFields">
+                    <div class="form-group" style="margin-bottom: 0.85rem;" id="fieldDebtorName">
+                        <label style="color: #fecaca; font-weight: 500; font-size: 0.85rem;">Attacker Name</label>
+                        <input type="text" id="simDebtorName" value="Evil Hacker"
+                            style="background: rgba(255,255,255,0.15); border: none; color: #fff; padding: 0.65rem 0.85rem; border-radius: 6px; width: 100%;">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0.85rem;" id="fieldDebtorAccount">
+                        <label style="color: #fecaca; font-weight: 500; font-size: 0.85rem;">Attacker Account</label>
+                        <input type="text" id="simDebtorAccount" value="GB_HACKER_001"
+                            style="background: rgba(255,255,255,0.15); border: none; color: #fff; padding: 0.65rem 0.85rem; border-radius: 6px; width: 100%;">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0.85rem; display:none;" id="fieldCreditorName">
+                        <label style="color: #fecaca; font-weight: 500; font-size: 0.85rem;">Target Creditor Name</label>
+                        <input type="text" id="simCreditorName" value="MULE_TARGET_01"
+                            style="background: rgba(255,255,255,0.15); border: none; color: #fff; padding: 0.65rem 0.85rem; border-radius: 6px; width: 100%;">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0.85rem; display:none;" id="fieldCreditorAccount">
+                        <label style="color: #fecaca; font-weight: 500; font-size: 0.85rem;">Target Creditor Account</label>
+                        <input type="text" id="simCreditorAccount" value="ACC_MULE_999"
+                            style="background: rgba(255,255,255,0.15); border: none; color: #fff; padding: 0.65rem 0.85rem; border-radius: 6px; width: 100%;">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0.85rem;" id="fieldAmount">
+                        <label style="color: #fecaca; font-weight: 500; font-size: 0.85rem;">Amount (IDR)</label>
+                        <input type="number" id="simAmount" value="500000" min="1000"
+                            style="background: rgba(255,255,255,0.15); border: none; color: #fff; padding: 0.65rem 0.85rem; border-radius: 6px; width: 100%;">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 1rem;" id="fieldCount">
+                        <label style="color: #fecaca; font-weight: 500; font-size: 0.85rem;">Transaction Count</label>
+                        <input type="number" id="simCount" value="20" min="5" max="100"
+                            style="background: rgba(255,255,255,0.15); border: none; color: #fff; padding: 0.65rem 0.85rem; border-radius: 6px; width: 100%;">
+                    </div>
+                </div>
+
+                <button class="btn" style="background: #fff; color: #dc2626; display: flex; align-items: center; gap: 0.5rem; justify-content: center;" onclick="runFraudSimulation()">
+                    <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Run Simulation
+                </button>
+
+                <!-- Progress Steps -->
+                <div id="fraudSimProgress" style="display:none; margin-top: 1.25rem;">
+                    <div style="background: rgba(0,0,0,0.3); padding: 1rem; border-radius: 10px;">
+                        <div style="color: #fecaca; font-weight: 600; font-size: 0.9rem; margin-bottom: 0.75rem;">📊
+                            Simulation Progress</div>
+                        <div id="fraudSimSteps" style="display: flex; flex-direction: column; gap: 8px;">
+                            <div class="sim-step" data-step="1"
+                                style="display: flex; align-items: center; gap: 10px; padding: 0.4rem 0;">
+                                <span class="sim-icon" style="font-size: 1.1em; min-width: 24px;">⏳</span>
+                                <span style="color: #34d399; font-size: 0.85rem;">Step 1: Normal Transaction
+                                    (ACCC)</span>
+                            </div>
+                            <div class="sim-step" data-step="2"
+                                style="display: flex; align-items: center; gap: 10px; padding: 0.4rem 0;">
+                                <span class="sim-icon" style="font-size: 1.1em; min-width: 24px;">⏳</span>
+                                <span style="color: #fbbf24; font-size: 0.85rem;">Step 2: Trigger Fraud Pattern</span>
+                            </div>
+                            <div class="sim-step" data-step="3"
+                                style="display: flex; align-items: center; gap: 10px; padding: 0.4rem 0;">
+                                <span class="sim-icon" style="font-size: 1.1em; min-width: 24px;">⏳</span>
+                                <span style="color: #60a5fa; font-size: 0.85rem;">Step 3: Check Fraud Detection</span>
+                            </div>
+                            <div class="sim-step" data-step="4"
+                                style="display: flex; align-items: center; gap: 10px; padding: 0.4rem 0;">
+                                <span class="sim-icon" style="font-size: 1.1em; min-width: 24px;">⏳</span>
+                                <span style="color: #f87171; font-size: 0.85rem;">Step 4: Block Transaction
+                                    (RJCT)</span>
+                            </div>
+                            <div class="sim-step" data-step="5"
+                                style="display: flex; align-items: center; gap: 10px; padding: 0.4rem 0;">
+                                <span class="sim-icon" style="font-size: 1.1em; min-width: 24px;">⏳</span>
+                                <span style="color: #a78bfa; font-size: 0.85rem;">Step 5: Summary</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Summary Box -->
+                <div id="fraudSimSummary" style="display:none; margin-top: 1rem;">
+                    <div
+                        style="background: rgba(0,0,0,0.4); padding: 1rem; border-radius: 10px; border-left: 4px solid #f87171;">
+                        <div style="color: #fca5a5; font-weight: 600; font-size: 0.9rem; margin-bottom: 0.5rem;">🚨
+                            Fraud Summary</div>
+                        <div id="fraudSummaryContent" style="color: #fecaca; font-size: 0.8rem; line-height: 1.6;">
+                        </div>
+                    </div>
+                </div>
+
+                <div id="fraudSimResponse" class="response-box"
+                    style="display:none; margin-top: 1rem; background: rgba(0,0,0,0.3); border: none; border-radius: 8px; padding: 0.85rem; max-height: 300px; overflow-y: auto;">
+                    <div style="color: #fca5a5; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.5rem;">📋 Full
+                        Response</div>
+                    <pre
+                        style="color: #fecaca; font-size: 0.7rem; white-space: pre-wrap; word-break: break-word; margin: 0;"></pre>
+                </div>
+            </div>
+
+            <!-- Full E2E ISO 20022 Flow -->
+            <div class="card" style="background: #0f172a; border: none;">
+                <h2 style="color: #fff; border: none; margin-bottom: 0.75rem; font-size: 1.125rem; font-weight: 600;">
+                    <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                    </svg>
+                    Full ISO 20022 E2E Flow
+                </h2>
+                <p style="color: #94a3b8; font-size: 0.875rem; margin-bottom: 1rem;">
+                    pain.001 → pain.013 → pacs.008 → pacs.002
+                </p>
+
+                <!-- Why Test This Section -->
+                <div
+                    style="background: rgba(99, 102, 241, 0.15); padding: 1rem; border-radius: 10px; margin-bottom: 1.5rem; border-left: 3px solid #6366f1;">
+                    <div style="color: #a5b4fc; font-weight: 600; font-size: 0.9rem; margin-bottom: 0.5rem;">💡 Kenapa
+                        Harus Test Ini?</div>
+                    <ul style="color: #c7d2fe; font-size: 0.85rem; margin: 0; padding-left: 1.25rem; line-height: 1.6;">
+                        <li><strong>Validasi Full Lifecycle</strong> - Test seluruh alur pembayaran dari inisiasi sampai
+                            konfirmasi</li>
+                        <li><strong>Compliance ISO 20022</strong> - Pastikan sistem Anda mendukung standar pesan
+                            internasional</li>
+                        <li><strong>Fraud Detection</strong> - Verifikasi Tazama dapat mendeteksi fraud di setiap tahap
+                        </li>
+                        <li><strong>Integration Test</strong> - Pastikan semua komponen saling terhubung dengan benar
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 1rem;">
+                    <label style="color: #e2e8f0; font-weight: 500; font-size: 0.9rem;">Debtor Account</label>
+                    <input type="text" id="e2eDebtorAccount" placeholder="e.g. E2E_DEBTOR_001" value="E2E_DEBTOR_001"
+                        style="background: rgba(255,255,255,0.1); border: none; color: #fff; padding: 0.75rem 1rem; border-radius: 8px; width: 100%;">
+                </div>
+                <div class="form-group" style="margin-bottom: 1rem;">
+                    <label style="color: #e2e8f0; font-weight: 500; font-size: 0.9rem;">Creditor Account</label>
+                    <input type="text" id="e2eCreditorAccount" placeholder="e.g. E2E_CREDITOR_001"
+                        value="E2E_CREDITOR_001"
+                        style="background: rgba(255,255,255,0.1); border: none; color: #fff; padding: 0.75rem 1rem; border-radius: 8px; width: 100%;">
+                </div>
+                <div class="form-group" style="margin-bottom: 1rem;">
+                    <label style="color: #e2e8f0; font-weight: 500; font-size: 0.9rem;">Amount (IDR)</label>
+                    <input type="number" id="e2eAmount" placeholder="e.g. 1000000" step="0.01" value="1000000"
+                        style="background: rgba(255,255,255,0.1); border: none; color: #fff; padding: 0.75rem 1rem; border-radius: 8px; width: 100%;">
+                </div>
+                <div class="form-group" style="margin-bottom: 1.5rem;">
+                    <label style="color: #e2e8f0; font-weight: 500; font-size: 0.9rem;">Final Status</label>
+                    <select id="e2eFinalStatus"
+                        style="background: rgba(255,255,255,0.1); border: none; color: #fff; padding: 0.75rem 1rem; border-radius: 8px; width: 100%;">
+                        <option value="ACCC" style="background: #1a1a2e;">ACCC - Accepted Customer Credit</option>
+                        <option value="ACSC" style="background: #1a1a2e;">ACSC - Accepted Settlement Completed</option>
+                        <option value="RJCT" style="background: #1a1a2e;">RJCT - Rejected</option>
+                    </select>
+                </div>
+
+                <button class="btn btn-primary" style="display: flex; align-items: center; gap: 0.5rem; justify-content: center;" onclick="testE2EFlow()">
+                    <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Run Full E2E Flow
+                </button>
+
+                <!-- Progress Steps -->
+                <div id="e2eProgressBox" style="display:none; margin-top: 1.5rem;">
+                    <div
+                        style="background: rgba(255,255,255,0.05); padding: 1.25rem; border-radius: 12px; backdrop-filter: blur(10px);">
+                        <div style="color: #e2e8f0; font-weight: 600; margin-bottom: 1rem; font-size: 0.95rem;">📊
+                            Progress</div>
+                        <div id="e2eSteps" style="display: flex; flex-direction: column; gap: 10px;">
+                            <div id="step1" class="e2e-step"
+                                style="display: flex; align-items: center; gap: 12px; padding: 0.5rem 0;">
+                                <span class="step-icon" style="font-size: 1.2em; min-width: 28px;">⏳</span>
+                                <span style="color: #38bdf8; font-size: 0.9rem;">Step 1: pain.001 - Customer Credit
+                                    Transfer Initiation</span>
+                            </div>
+                            <div id="step2" class="e2e-step"
+                                style="display: flex; align-items: center; gap: 12px; padding: 0.5rem 0;">
+                                <span class="step-icon" style="font-size: 1.2em; min-width: 28px;">⏳</span>
+                                <span style="color: #a78bfa; font-size: 0.9rem;">Step 2: pain.013 - Creditor Payment
+                                    Activation Request</span>
+                            </div>
+                            <div id="step3" class="e2e-step"
+                                style="display: flex; align-items: center; gap: 12px; padding: 0.5rem 0;">
+                                <span class="step-icon" style="font-size: 1.2em; min-width: 28px;">⏳</span>
+                                <span style="color: #34d399; font-size: 0.9rem;">Step 3: pacs.008 - FI to FI Customer
+                                    Credit Transfer</span>
+                            </div>
+                            <div id="step4" class="e2e-step"
+                                style="display: flex; align-items: center; gap: 12px; padding: 0.5rem 0;">
+                                <span class="step-icon" style="font-size: 1.2em; min-width: 28px;">⏳</span>
+                                <span style="color: #fbbf24; font-size: 0.9rem;">Step 4: pacs.002 - Payment Status
+                                    Report</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="responseE2E" class="response-box"
+                    style="display:none; margin-top: 1.5rem; background: rgba(0,0,0,0.4); border: none; border-radius: 10px; padding: 1rem; max-height: 400px; overflow-y: auto;">
+                    <div style="color: #94a3b8; font-weight: 600; font-size: 0.9rem; margin-bottom: 0.75rem;">📋
+                        Response Log</div>
+                    <pre
+                        style="color: #e2e8f0; font-size: 0.8rem; white-space: pre-wrap; word-break: break-word; margin: 0;"></pre>
+                </div>
+            </div>
+
+
+            <!-- Advanced Scenarios - DEPRECATED (Hidden - Use Fraud Simulation above) -->
+            <div class="card card-info" style="display: none;">
+                <h2>
+                    <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    Advanced Scenarios (Deprecated)
+                </h2>
+                <p class="card-desc">⚠️ This section is deprecated. Please use "Fraud Simulation" above for better UX and full E2E testing.</p>
+
+                <div class="scenario-selector">
+                    <div class="form-group">
+                        <label>Select Scenario</label>
+                        <select id="attackScenarioSelect" onchange="updateScenarioDesc()">
+                            <option value="rule_006">Structuring / Smurfing (Rule 006)</option>
+                            <option value="rule_018">High Value Transfer (Rule 018)</option>
+                        </select>
+                    </div>
+                    <div id="scenarioDescription" style="font-size: 0.9em;"></div>
+                </div>
+
+                <form id="advancedAttackForm">
+                    <input type="hidden" name="scenario" id="hiddenScenarioInput">
+                    <div class="form-group">
+                        <label>Amount (IDR)</label>
+                        <input type="number" name="amount" id="adv_amount" placeholder="9500000">
+                        <small id="amountHint" style="color: #666; display: block; margin-top: 4px;">
+                            💡 Recommended: <strong>9,500,000</strong> (just under reporting threshold)
+                        </small>
+                    </div>
+                    <div class="form-group">
+                        <label>Count</label>
+                        <input type="number" name="count" id="adv_count" value="8">
+                        <small style="color: #666;">Rule 006 needs 5+ similar transactions</small>
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="background-color: #0891b2;">Execute
+                        Scenario</button>
+                    <div class="response-box" style="display:none;">
+                        <pre></pre>
+                    </div>
+                </form>
+
+                <div class="log-viewer">
+                    <div style="display: flex; gap: 10px;">
+                        <button type="button" class="btn btn-secondary"
+                            onclick="checkInternalLogs('tazama-rule-006-1', 'logsBox006', 'logsText006')">
+                            Rule 006 Logs
+                        </button>
+                        <button type="button" class="btn btn-secondary"
+                            onclick="checkInternalLogs('tazama-rule-018-1', 'logsBox018', 'logsText018')">
+                            Rule 018 Logs
+                        </button>
+                    </div>
+                    <div id="logsBox006" class="logs-container" style="display:none;">
+                        <strong>Rule 006 Logs</strong>
+                        <pre id="logsText006"></pre>
+                    </div>
+                    <div id="logsBox018" class="logs-container" style="display:none;">
+                        <strong>Rule 018 Logs</strong>
+                        <pre id="logsText018"></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Fraud Alerts Panel -->
+        <div id="fraudAlertsPanel" class="card card-warning" style="display:none; margin-bottom: 2rem;">
+            <h2>
+                <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                Fraud Activity Detected
+            </h2>
+            <div id="fraudAlertsContent"></div>
+        </div>
+
+        <!-- Database Transaction History Panel (Collapsible) -->
+        <div class="card"
+            style="margin-bottom: 2rem; background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); border: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; cursor: pointer;"
+                onclick="toggleDbHistory()">
+                <h2 style="margin: 0; color: #fff; border: none;">
+                    <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                    </svg>
+                    Database Transaction History
+                </h2>
+                <div style="display: flex; gap: 0.5rem; align-items: center;">
+                    <button class="btn btn-secondary" style="padding: 0.35rem 0.75rem; font-size: 0.8rem; display: flex; align-items: center; gap: 0.35rem;"
+                        onclick="event.stopPropagation(); loadDbSummary();">
+                        <svg style="width: 1rem; height: 1rem;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                        </svg>
+                        Refresh
+                    </button>
+                    <span id="dbHistoryToggleIcon" style="color: #94a3b8; font-size: 1.2rem;">▶</span>
+                </div>
+            </div>
+            <div id="dbHistoryContent"
+                style="display: none; margin-top: 1rem; padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 8px;">
+                <div id="dbSummaryContent" style="font-size: 0.9rem; color: #cbd5e1;">
+                    <em>Klik "Refresh" untuk melihat transaction history dari Tazama database.</em>
+                </div>
+            </div>
+        </div>
+
+        <!-- Note: Activity Log removed - all data is now in Tazama database -->
+        <!-- Use "📊 Database Transaction History" section above to view transaction data -->
+
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="spinner"></div>
+        <p style="font-weight: 600; color: var(--text-main);">Processing Transaction...</p>
+    </div>
+
+    <!-- Main Logic -->
+    <script src="/static/js/app.js?v=2.5"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            if (typeof updateFraudSimFields === 'function') {
+                updateFraudSimFields();
+            }
+        });
+    </script>
+</body>
+
+</html>

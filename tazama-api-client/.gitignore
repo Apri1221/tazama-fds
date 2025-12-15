@@ -1,0 +1,46 @@
+# Python / Virtualenvs (ignore envs anywhere)
+# common names and variants, match in any subdirectory
+**/.venv/
+**/venv/
+**/env/
+**/ENV/
+**/.venv-*/
+venv*/
+
+# Byte-compiled / optimized / DLL files (any folder)
+**/__pycache__/
+**/*.py[cod]
+**/*$py.class
+
+# Common Python caches and tooling
+.mypy_cache/
+.pytest_cache/
+.cache/
+.venv
+.python-version
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+.coverage
+coverage.xml
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints
+
+# VS Code
+.vscode/
+
+# macOS
+.DS_Store
+
+# local development
+.env
+instance/

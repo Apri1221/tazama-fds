@@ -1,0 +1,62 @@
+{
+  "name": "event-flow",
+  "version": "3.0.0",
+  "description": "Event flow control processor for tazama",
+  "keywords": [
+    "tazama"
+  ],
+  "homepage": "https://github.com/tazama-lf/event-flow#readme",
+  "bugs": {
+    "url": "https://github.com/tazama-lf/event-flow/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tazama-lf/event-flow.git"
+  },
+  "license": "Apache-2.0",
+  "author": "Tazama.org",
+  "main": "src/index.ts",
+  "scripts": {
+    "build": "tsc --project tsconfig.json",
+    "start": "node -r dotenv/config build/index.js",
+    "clean": "npx rimraf build node_modules coverage package-lock.json",
+    "fix": "npm run fix:prettier && npm run fix:eslint",
+    "fix:eslint": "eslint --fix",
+    "fix:prettier": "prettier --write \"**/*.ts\"",
+    "lint": "npm run lint:eslint && npm run lint:prettier",
+    "lint:eslint": "eslint",
+    "lint:eslint-unused": "eslint --report-unused-disable-directives",
+    "lint:eslint-no-inline": "eslint --no-inline-config",
+    "lint:prettier": "prettier --check \"**/*.ts\"",
+    "test": "jest --config=jest.config.ts --passWithNoTests",
+    "prepare": "husky"
+  },
+  "dependencies": {
+    "@tazama-lf/frms-coe-lib": "6.0.0",
+    "@tazama-lf/frms-coe-startup-lib": "3.0.0"
+  },
+  "devDependencies": {
+    "@eslint-community/eslint-plugin-eslint-comments": "^4.5.0",
+    "@stylistic/eslint-plugin": "^5.4.0",
+    "@types/jest": "^30.0.0",
+    "@typescript-eslint/eslint-plugin": "^8.45.0",
+    "@typescript-eslint/parser": "^8.45.0",
+    "eslint": "^9.36.0",
+    "eslint-config-love": "^121.0.0",
+    "eslint-config-prettier": "^10.1.8",
+    "husky": "^9.1.7",
+    "ioredis-mock": "8.9.0",
+    "jest": "^30.2.0",
+    "lint-staged": "^16.2.3",
+    "prettier": "^3.6.2",
+    "ts-jest": "^29.4.4",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.3"
+  },
+  "lint-staged": {
+    "*.{js,ts}": [
+      "eslint --fix",
+      "prettier --write"
+    ]
+  }
+}
