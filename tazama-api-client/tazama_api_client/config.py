@@ -7,7 +7,10 @@ import os
 
 # Set to True to use Local PostgreSQL (tazama-local-db - port 3001)
 # Set to False to use Full Docker (Full-Stack-Docker-Tazama - port 3000)
-USE_LOCAL_POSTGRES = False  # Default: Full Docker
+
+# without editing source. Accepts: '1','true','yes' (case-insensitive) to enable.
+_env_use_local = os.getenv('USE_LOCAL_POSTGRES', 'false').lower()
+USE_LOCAL_POSTGRES = _env_use_local in ('1', 'true', 'yes')
 
 # ============================================================================
 # TAZAMA ENDPOINT CONFIGURATION (Auto-configured based on deployment)

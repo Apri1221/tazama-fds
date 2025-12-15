@@ -4,6 +4,8 @@ Supports switching between Full Docker and Local PostgreSQL
 """
 
 import subprocess
+import os
+import shutil
 from abc import ABC, abstractmethod
 from typing import Dict, List, Optional
 
@@ -42,11 +44,18 @@ class FullDockerStrategy(DatabaseQueryStrategy):
         
         cmd.extend(["-c", query])
         
+        # Pass through PGPASSWORD from env if set so psql can authenticate
+        env = os.environ.copy()
+        db_password = os.getenv('DB_PASSWORD') or os.getenv('PGPASSWORD')
+        if db_password:
+            env['PGPASSWORD'] = db_password
+
         return subprocess.run(
             cmd,
             capture_output=True,
             text=True,
-            timeout=10
+            timeout=10,
+            env=env,
         )
     
     def get_name(self) -> str:
@@ -75,11 +84,18 @@ class LocalPostgresStrategy(DatabaseQueryStrategy):
         
         cmd.extend(["-c", query])
         
+        # Ensure psql can read password via PGPASSWORD if provided
+        env = os.environ.copy()
+        db_password = os.getenv('DB_PASSWORD') or os.getenv('PGPASSWORD')
+        if db_password:
+            env['PGPASSWORD'] = db_password
+
         return subprocess.run(
             cmd,
             capture_output=True,
             text=True,
-            timeout=10
+            timeout=10,
+            env=env,
         )
     
     def get_name(self) -> str:
@@ -212,17 +228,36 @@ def create_database_service(use_local: bool = False) -> DatabaseQueryService:
     Returns:
         Configured DatabaseQueryService instance
     """
+    # Auto-detect running inside a container (no `docker` CLI available)
+    in_container = os.path.exists('/.dockerenv') or os.getenv('IN_DOCKER', '').lower() == 'true'
+
+    # If inside a container, prefer direct network connection to the Postgres service
+    if in_container:
+        use_local = True
+
     if use_local:
+        # Allow overriding DB connection details via env vars for flexibility
+        host = os.getenv('DB_HOST', 'tazama-postgres')
+        port = int(os.getenv('DB_PORT', os.getenv('PGPORT', '5432')))
+        user = os.getenv('DB_USER', 'postgres')
+        database = os.getenv('DB_NAME', 'event_history')
+
         strategy = LocalPostgresStrategy(
-            host="localhost",
-            port=5430,
-            user="badraaji",
-            database="event_history"
+            host=host,
+            port=port,
+            user=user,
+            database=database
         )
     else:
+        container_name = os.getenv('POSTGRES_CONTAINER', 'tazama-postgres')
+        database = os.getenv('DB_NAME', 'event_history')
+        # If docker CLI is not available on the host running this code, FullDockerStrategy will fail.
+        if shutil.which('docker') is None:
+            raise FileNotFoundError('docker CLI not found; cannot use FullDockerStrategy. Set USE_LOCAL_POSTGRES=true or run outside a container.')
+
         strategy = FullDockerStrategy(
-            container_name="tazama-postgres",
-            database="event_history"
+            container_name=container_name,
+            database=database
         )
     
     return DatabaseQueryService(strategy)

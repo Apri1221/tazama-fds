@@ -276,6 +276,15 @@ services:
       - SERVER_HOST=0.0.0.0
       - SERVER_PORT=8091
       - TMS_BASE_URL=http://tazama-tms:3000
+      # Prefer network Postgres when running inside Docker
+      - USE_LOCAL_POSTGRES=true
+      - IN_DOCKER=true
+      - DB_HOST=tazama-postgres
+      - DB_PORT=5432
+      - DB_USER=postgres
+      - DB_NAME=event_history
+      - DB_PASSWORD=postgres
+      - PGPASSWORD=postgres
     depends_on:
       - tms-service
     networks:
