@@ -2,9 +2,9 @@
 External Client
        │
        ▼
-┌──────────────────┐
+┌───────────────────┐
 │   TMS (port 3000) │ ◄── Entry Point (ISO20022 messages)
-└──────────────────┘
+└───────────────────┘
        │ NATS
        ▼
 ┌──────────────────┐
@@ -42,8 +42,6 @@ External Client
 
 ---
 
-## 🚀 LOCAL SETUP COMPLETE!
-
 ### Quick Start
 
 All services have been cloned and infrastructure is ready. See **[QUICKSTART.md](QUICKSTART.md)** for immediate next steps.
@@ -79,8 +77,7 @@ https://github.com/tazama-lf/relay-service
 URL: https://github.com/tazama-lf/admin-service
 Port: 3100 (as you mentioned)
 Purpose: Administration API for managing configurations, reports, and event flow control conditions.
-Key Functions:
-
+Key Functions: 
 Get reports by message ID from PostgreSQL
 Manage event flow control conditions for entities and accounts (block/override transactions)
 CRUD operations for Network Map, Rule Config, and Typology Config
@@ -92,12 +89,11 @@ URL: https://github.com/tazama-lf/tms-service
 Port: 3000 (as you mentioned)
 Purpose: Transaction Monitoring Service - the entry point for all transactions.
 Key Functions:
-
 Accepts ISO20022 messages (pain.001, pain.013, pacs.008, pacs.002)
 Validates incoming transactions
 Stores transaction data in PostgreSQL
 Caches data in Valkey (Redis)
-Sends messages to Event Director via NATS
+Sends messages to Event Director via NATS. 
 
 Flow: External Client → TMS → Event Director
 
@@ -105,7 +101,6 @@ Flow: External Client → TMS → Event Director
 URL: https://github.com/tazama-lf/event-director
 Purpose: Routes transactions to rules for processing based on the Network Map.
 Key Functions:
-
 Fetches active Network Map (from cache or database)
 Filters Network Map for relevant message types
 Deduplicates rules across typologies
@@ -116,8 +111,7 @@ Flow: TMS → Event Director → Rule Processors (rule-901, event-flow, etc.)
 4. rule-executer ✅
 URL: https://github.com/tazama-lf/rule-executer
 Purpose: Generic rule execution framework - this is a template/executor, not a specific rule.
-Key Functions:
-
+Key Functions: 
 Receives messages from Event Director
 Loads specific rule logic as a library (e.g., rule-901)
 Executes rule logic and produces RuleResult
@@ -130,7 +124,6 @@ Flow: Event Director → Rule Executer (with rule-901 library) → Typology Proc
 URL: https://github.com/tazama-lf/typology-processor
 Purpose: Calculates typology scores based on rule results.
 Key Functions:
-
 Aggregates all rule results for a typology
 Calculates weighted typology score using configured expressions
 Checks alert and interdiction thresholds
@@ -143,7 +136,6 @@ Flow: Rule Processors → Typology Processor → TADP (and optionally Interdicti
 URL: https://github.com/tazama-lf/transaction-aggregation-decisioning-processor
 Purpose: Final aggregation and decision-making for transactions.
 Key Functions:
-
 Receives typology results
 Aggregates all typologies for a transaction
 Creates final evaluation report
@@ -156,7 +148,6 @@ Flow: Typology Processor → TADP → (optionally) CMS/Alert Service
 URL: https://github.com/tazama-lf/event-flow
 Purpose: Specialized rule processor for event flow control (blocking/overriding transactions based on conditions).
 Key Functions:
-
 Receives messages from Event Director (like regular rules)
 Checks conditions set via admin-service (entity/account blocks/overrides)
 Returns special rule results: "block", "override", or "none"
@@ -168,14 +159,13 @@ Flow: Event Director → Event Flow → Typology Processor
 URL: https://github.com/tazama-lf/relay-service
 Purpose: Bridge/adapter service for forwarding NATS messages to external systems.
 Key Functions:
-
 Monitors NATS subjects
 Relays messages to external destinations:
+- REST API
+- RabbitMQ
+- Kafka
+- Another NATS server
 
-REST API
-RabbitMQ
-Kafka
-Another NATS server
 
 
 Plugin-based architecture for extensibility
@@ -184,7 +174,7 @@ Supports JSON and Protobuf message formats
 
 
 
-Aha! So when building from source, you don't have the nats-relay-plugin package (because it's private). But you actually CAN build from source if you manually install the plugin first!
+So when building from source, we don't have the nats-relay-plugin package (because it's private). But we actually CAN build from source if we manually install the plugin first!
 
 Let me show you:
 
