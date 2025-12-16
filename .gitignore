@@ -18,8 +18,8 @@ build/
 # Logs and env
 logs/
 *.log
-.env
-.env.rule*
+# .env
+# .env.rule*
 
 # Coverage and test output
 coverage/
@@ -35,7 +35,7 @@ docker-compose.override.yml
 .docker/
 
 # This file is ignored by git
-.env
+# .env
 # services/
 # init-db/
 node_modules/
